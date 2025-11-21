@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
 
 const NetworkStatus = () => {
   const [networkStatus, setNetworkStatus] = useState(null);
@@ -22,7 +23,7 @@ const NetworkStatus = () => {
 
     // This would be connected to your WebSocket
     // For now, we'll simulate updates
-    const ws = new WebSocket('ws://localhost:8082');
+    const ws = new WebSocket( WS_URL);
     ws.onmessage = handleNetworkMessage;
 
     return () => ws.close();

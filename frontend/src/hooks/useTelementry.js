@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
 
 export default function useTelemetry() {
   const [telemetry, setTelemetry] = useState(null);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket(WS_URL);
 
     socket.onopen = () => {
       console.log("Connected to Telemetry Server");

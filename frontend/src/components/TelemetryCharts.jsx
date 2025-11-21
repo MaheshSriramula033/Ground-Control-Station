@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
+
 
 const TelemetryCharts = () => {
   const [altitudeData, setAltitudeData] = useState([]);
@@ -12,7 +14,7 @@ const TelemetryCharts = () => {
     
     try {
       console.log('📈 TelemetryCharts: Connecting to telemetry server...');
-      ws = new WebSocket('ws://localhost:8082');
+      ws = new WebSocket(WS_URL);
       
       ws.onopen = () => {
         setConnectionStatus('Connected');

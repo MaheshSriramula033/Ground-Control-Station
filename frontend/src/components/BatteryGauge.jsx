@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
+
 
 const BatteryGauge = () => {
   const [battery, setBattery] = useState(0);
@@ -22,7 +24,7 @@ const BatteryGauge = () => {
       }
     };
 
-    const ws = new WebSocket('ws://localhost:8082');
+    const ws = new WebSocket('WS_URL');
     ws.onmessage = handleTelemetry;
 
     return () => ws.close();

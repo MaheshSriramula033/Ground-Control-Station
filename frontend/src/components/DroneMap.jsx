@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useState, useRef } from "react";
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
 
 // Vite-compatible imports for default markers
 import marker2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -60,7 +61,7 @@ export default function DroneMap() {
   useEffect(() => {
     console.log("🚀 DroneMap: Initializing WebSocket connection");
 
-    const ws = new WebSocket("ws://localhost:8082");
+    const ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
       console.log("✅ DroneMap: WebSocket connected");

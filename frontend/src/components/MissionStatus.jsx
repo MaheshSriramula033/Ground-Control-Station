@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+const WS_URL = import.meta.env.VITE_TELEMETRY_WS;
 
 const MissionStatus = () => {
   const [telemetry, setTelemetry] = useState({

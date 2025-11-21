@@ -29,7 +29,8 @@ const VideoStreamer = () => {
       setStatus("Connecting to signaling server...");
       setError("");
       
-      const wsUrl = `ws://${window.location.hostname}:8081`;
+      const wsUrl = import.meta.env.VITE_SIGNALING_WS;
+
       console.log("Connecting to:", wsUrl);
       
       socket.current = new WebSocket(wsUrl);
