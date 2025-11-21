@@ -1,5 +1,5 @@
 const dgram = require("dgram");
-const WebSocket = require("ws");
+const WebSocket = require("./node_modules/ws");
 
 // UDP clients for MAVLink simulation and command listening
 const telemetryClient = dgram.createSocket("udp4");
