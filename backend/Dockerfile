@@ -1,24 +1,23 @@
+# Use lightweight production Node image
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files first (better layer caching)
 COPY package*.json ./
-RUN npm install --production
 
-# Copy backend source
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy rest of the backend source
 COPY . .
 
-# Create non-root user
-RUN addgroup -S nodegroup && adduser -S nodeuser -G nodegroup
-USER nodeuser
-
-# Expose all backend ports
-EXPOSE 3000
+# Expose UDP + WebSocket ports
 EXPOSE 14550/udp
 EXPOSE 8081
 EXPOSE 8082
 EXPOSE 8083
 
-# Start backend using start.js
+# Start the Enhanced GCS backend
 CMD ["node", "start.js"]
