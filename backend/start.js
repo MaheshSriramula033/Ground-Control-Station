@@ -1,5 +1,6 @@
 const EnhancedGCSServer = require('./enhanced-server');
 require("dotenv").config();
+require("./http-server");
 
 console.log('🚀 Starting Ground Control Station...');
 console.log('=====================================');
