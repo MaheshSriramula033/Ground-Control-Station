@@ -1,0 +1,388 @@
+.app {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.telemetry-box {
+  margin-top: 20px;
+  background: #f4f4f4;
+  padding: 20px;
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0f1b2d;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.App {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f1b2d 0%, #1a2d3e 100%);
+}
+
+/* Header */
+.app-header {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  text-align: center;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(45deg, #00d4ff, #0099ff);
+  margin-bottom: 0.5rem;
+  color: black;
+}
+
+.app-header p {
+  color: #88aacc;
+  font-size: 1.1rem;
+}
+
+/* Dashboard Layout */
+.dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.row {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Top row: Map and Status side by side */
+.row:first-child {
+  grid-template-columns: 2fr 1fr;
+  min-height: 400px;
+}
+
+/* Middle row: Full width charts */
+.row:nth-child(2) {
+  grid-template-columns: 1fr;
+}
+
+/* Bottom row: Video streaming */
+.row:last-child {
+  grid-template-columns: 1fr;
+}
+
+/* Card-like containers */
+.col {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Map container */
+.map-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+.map-container > div {
+  height: 100%;
+  border-radius: 12px;
+}
+
+/* Status container */
+.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Mission Status Panel */
+.mission-status-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.mission-status-panel h3 {
+  color: #00d4ff;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.status-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 4px solid #00d4ff;
+}
+
+.status-item .label {
+  color: #88aacc;
+  font-weight: 500;
+}
+
+.status-item .value {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.status-item .value.armed {
+  color: #4CAF50;
+}
+
+.status-item .value.disarmed {
+  color: #f44336;
+}
+
+/* Battery Gauge */
+.battery-gauge {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.battery-gauge h3 {
+  color: #00d4ff;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.battery-level {
+  width: 100%;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.battery-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.5s ease, background-color 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.battery-info {
+  display: flex;
+  justify-content: space-between;
+  color: #88aacc;
+  font-size: 0.9rem;
+}
+
+/* Video Streaming Section */
+.video-section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.video-section h2 {
+  color: #00d4ff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.video-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.video-component {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-component h3 {
+  color: #00d4ff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.video-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #00d4ff, #0099ff);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(45deg, #ff416c, #ff4b2b);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Video element */
+video {
+  width: 100%;
+  border-radius: 8px;
+  background: #000;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Status messages */
+.status-message {
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.status-connected {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-error {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.status-waiting {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .row:first-child {
+    grid-template-columns: 1fr;
+  }
+  
+  .video-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+  
+  .col {
+    padding: 1rem;
+  }
+}
+
+
+
+/* Drone Map Specific Styles */
+.map-container {
+  border-radius: 12px;
+}
+
+.drone-icon {
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Ensure map tiles load properly */
+.leaflet-container {
+  background: #1a2d3e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.drone-icon {
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+  transition: all 0.5s ease;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Smooth map transitions */
+.leaflet-container {
+  transition: all 0.5s ease;
+}
+
+
+

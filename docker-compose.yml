@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gcs-backend
+    ports:
+      - "3000:3000"
+      - "14550:14550/udp"
+      - "8081:8081"
+      - "8082:8082"
+      - "8083:8083"
+    environment:
+      NODE_ENV: production
+      USE_SIMULATOR: "false"
+      ZEROTIER_ENABLED: "false"
+      ZEROTIER_NETWORK_ID: ${ZEROTIER_NETWORK_ID}
+    volumes:
+      - ./backend/.env:/app/.env:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gcs-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: gcs-simulator
+    environment:
+      TARGET_BACKEND_WS: ws://backend:8082
+    restart: unless-stopped
+    depends_on:
+      - backend
