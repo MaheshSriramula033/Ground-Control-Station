@@ -14,7 +14,6 @@ import cors from "cors";
 
 const app = express();
 
-// allow requests from anywhere (frontend served from Vercel/other)
 app.use(
   cors({
     origin: "*",
@@ -26,30 +25,22 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Health check
 app.get("/health", (req, res) =>
   res.json({ status: "ok", ts: Date.now() })
 );
 
 const server = http.createServer(app);
 
-// --------------------------------------
-// WEBSOCKET FOR TELEMETRY + NETWORK
-// --------------------------------------
+// Telemetry + Network WebSocket
 createWebsocket(server);
 
-// --------------------------------------
-// HTTP ROUTES FOR LATEST TELEMETRY
-// --------------------------------------
+// Telemetry HTTP endpoint
 attachHttp(app);
 
-// --------------------------------------
-// POST /api/telemetry (Render-compatible)
-// --------------------------------------
+// Render-compatible Telemetry POST ingest
 app.post("/api/telemetry", (req, res) => {
   try {
-    const payload = req.body;
-    publishTelemetry(payload);
+    publishTelemetry(req.body);
     return res.json({ ok: true });
   } catch (err) {
     console.error("Failed to accept telemetry:", err);
@@ -57,14 +48,10 @@ app.post("/api/telemetry", (req, res) => {
   }
 });
 
-// --------------------------------------
-// SIGNALING WS
-// --------------------------------------
+// WebRTC Signaling WS
 startSignaling(server);
 
-// --------------------------------------
-// UDP ONLY IN LOCAL DEV
-// (Enable with env ENABLE_UDP=true for local)
+// UDP (local only)
 if (process.env.ENABLE_UDP === "true") {
   startUdpReceiver();
   console.log("UDP RECEIVER ENABLED");
@@ -72,16 +59,11 @@ if (process.env.ENABLE_UDP === "true") {
   console.log("UDP RECEIVER DISABLED (RENDER SAFE)");
 }
 
-// --------------------------------------
-// SIMULATED NETWORK STATUS
-// --------------------------------------
+// Simulated network stats
 startNetworkSimulator();
 
-// --------------------------------------
-// START SERVER
-// --------------------------------------
+// Start server
 server.listen(config.PORT, () => {
   console.log(`Backend running on http://localhost:${config.PORT}`);
   console.log(`Telemetry WS ready at ws://localhost:${config.PORT}/`);
-  console.log(`HTTP telemetry endpoint: POST /api/telemetry`);
 });

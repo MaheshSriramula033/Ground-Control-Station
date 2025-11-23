@@ -6,19 +6,18 @@ let lastTelemetry = null;
 export default function createWebsocket(server) {
   wss = new WebSocketServer({ noServer: true });
 
-  // Allowed WebSocket paths
-  const allowedPaths = ["/", "/telemetry", "/ws", "/dashboard"];
-
   server.on("upgrade", (req, socket, head) => {
-    if (!allowedPaths.includes(req.url)) return;
+    // Skip signaling WS (handled separately)
+    if (req.url === "/signal") return;
 
+    // Accept ALL other WebSocket upgrade paths
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit("connection", ws, req);
     });
   });
 
   wss.on("connection", () => {
-    console.log("📡 Telemetry WebSocket connected");
+    console.log("📡 Telemetry/Network WebSocket connected");
   });
 }
 
@@ -27,7 +26,6 @@ export default function createWebsocket(server) {
 --------------------------------*/
 export function publishTelemetry(data) {
   lastTelemetry = data;
-
   if (!wss) return;
 
   const payload = JSON.stringify({ type: "telemetry", data });
