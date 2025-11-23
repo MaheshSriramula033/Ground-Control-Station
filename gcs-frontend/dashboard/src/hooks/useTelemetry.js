@@ -8,16 +8,20 @@ export default function useTelemetry() {
   const bufferRef = useRef([]);
 
   useEffect(() => {
-    const backendHost = import.meta.env.VITE_BACKEND_HTTP; 
-    const httpUrl = `https://${backendHost}/latest`;
+    const backendHost = import.meta.env.VITE_BACKEND_HTTP;
+    const backendUrl = backendHost.startsWith("http")
+      ? backendHost
+      : `https://${backendHost}`;
 
-    // Detect Render/Vercel → use HTTP polling (NO WebSocket)
+    const httpUrl = `${backendUrl}/latest`;
+
+    // Detect Render or Vercel → ALWAYS use HTTP polling
     const isCloud =
       backendHost.includes("onrender.com") ||
       window.location.hostname.includes("vercel.app");
 
     if (isCloud) {
-      console.log("🌍 CLOUD MODE: Using HTTP polling:", httpUrl);
+      console.log("🌍 CLOUD MODE: HTTP polling:", httpUrl);
       setConnectionStatus("Connected");
 
       const interval = setInterval(async () => {
@@ -51,13 +55,15 @@ export default function useTelemetry() {
       return () => clearInterval(interval);
     }
 
-    // ---------------------------
-    // LOCAL MODE → WebSocket
-    // ---------------------------
+    // -------------------------------------------------
+    // LOCAL MODE → WEBSOCKET
+    // -------------------------------------------------
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${wsProtocol}://${backendHost}`;
+    const wsUrl = backendHost.startsWith("ws")
+      ? backendHost
+      : `${wsProtocol}://${backendHost}`;
 
-    console.log("📡 WS MODE:", wsUrl);
+    console.log("📡 LOCAL WS MODE:", wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => setConnectionStatus("Connected");
