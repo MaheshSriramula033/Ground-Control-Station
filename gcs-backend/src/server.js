@@ -1,4 +1,3 @@
-// backend/src/server.js
 import express from "express";
 import http from "http";
 import config from "./config/config.js";
@@ -12,13 +11,18 @@ import { startNetworkSimulator } from "./network/network_simulator.js";
 
 import morgan from "morgan";
 import cors from "cors";
+
 const app = express();
+
+// allow requests from anywhere (frontend served from Vercel/other)
 app.use(
   cors({
     origin: "*",
     methods: "GET,POST,OPTIONS",
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -60,7 +64,7 @@ startSignaling(server);
 
 // --------------------------------------
 // UDP ONLY IN LOCAL DEV
-// --------------------------------------
+// (Enable with env ENABLE_UDP=true for local)
 if (process.env.ENABLE_UDP === "true") {
   startUdpReceiver();
   console.log("UDP RECEIVER ENABLED");

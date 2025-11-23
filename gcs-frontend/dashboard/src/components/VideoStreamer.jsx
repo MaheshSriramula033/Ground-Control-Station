@@ -1,7 +1,26 @@
-// frontend/.../VideoStreamer.jsx
 import React, { useRef, useState } from "react";
 
 const SIGNAL_PATH = "/signal";
+
+// Helper: build WS URL from env or current host
+function buildSignalUrl() {
+  const env = import.meta.env.VITE_BACKEND_WS || "";
+  if (env) {
+    // If env already includes ws:// or wss://, use it directly. If it has a path, keep it.
+    if (env.startsWith("ws://") || env.startsWith("wss://")) {
+      // ensure trailing /signal if missing
+      return env.endsWith(SIGNAL_PATH) ? env : env.replace(/\/+$/, "") + SIGNAL_PATH;
+    }
+    // env might be host only (example: backend.example.com)
+    const proto = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${proto}://${env}${SIGNAL_PATH}`;
+  }
+
+  // fallback to same host as frontend (works both local and cloud if backend reachable on same host)
+  const proto = window.location.protocol === "https:" ? "wss" : "ws";
+  // if backend uses different port locally, set VITE_BACKEND_WS in .env (preferred)
+  return `${proto}://${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}${SIGNAL_PATH}`;
+}
 
 export default function VideoStreamer() {
   const localVideoRef = useRef(null);
@@ -11,8 +30,9 @@ export default function VideoStreamer() {
   const [status, setStatus] = useState("Idle");
 
   const createWS = () => {
-    const wsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.hostname}:3000${SIGNAL_PATH}`;
-    return new WebSocket(wsUrl);
+    const url = buildSignalUrl();
+    console.log("Streamer connecting to signaling at", url);
+    return new WebSocket(url);
   };
 
   const start = async () => {
@@ -38,8 +58,13 @@ export default function VideoStreamer() {
             localStreamRef.current = stream;
             if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-            // Create peer connection
-            const pc = new RTCPeerConnection();
+            // Create peer connection with ICE servers
+            const pc = new RTCPeerConnection({
+              iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                // add TURN servers here when available for production
+              ],
+            });
             pcRef.current = pc;
 
             // Add local tracks
@@ -53,15 +78,15 @@ export default function VideoStreamer() {
               }
             };
 
-            // (optional) monitor connection state
             pc.onconnectionstatechange = () => {
               console.log("PC state:", pc.connectionState);
+              if (pc.connectionState === "connected") setStatus("Connected (streaming)");
             };
 
-            // create offer -> setLocalDescription -> send offer
+            // create offer -> setLocalDescription -> send full SDP
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "offer", room: "demo", sdp: offer.sdp }));
+            ws.send(JSON.stringify({ type: "offer", room: "demo", sdp: offer.sdp, sdpType: offer.type }));
             setStatus("Offer sent, waiting for answer...");
           } catch (err) {
             console.error("getUserMedia or offer error:", err);
@@ -102,7 +127,6 @@ export default function VideoStreamer() {
           return;
         }
 
-        // other message types (error/debug)
         if (msg.type === "error") {
           console.warn("Signaling error:", msg.message);
         }

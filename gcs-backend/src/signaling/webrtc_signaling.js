@@ -1,4 +1,3 @@
-// backend/src/signaling/webrtc_signaling.js
 import { WebSocketServer } from 'ws';
 
 /**
