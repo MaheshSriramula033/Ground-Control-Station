@@ -1,7 +1,6 @@
 import React from "react";
 
 export default function NetworkStatus({ network }) {
-
   const netType = network?.network ?? "—";
   const vpnStatus = network?.vpn ?? "disconnected";
   const latency = network?.latency ?? 0;
@@ -12,13 +11,11 @@ export default function NetworkStatus({ network }) {
     <div className="network-card">
       <h3 className="network-title">Network Status</h3>
 
-      {/* --- NETWORK TYPE --- */}
       <div className="network-row">
         <div className="label">Network</div>
         <div className="value">{netType}</div>
       </div>
 
-      {/* --- VPN Status --- */}
       <div className="network-row">
         <div className="label">VPN</div>
         <div className={`value ${vpnStatus === "connected" ? "ok" : "bad"}`}>
@@ -28,7 +25,6 @@ export default function NetworkStatus({ network }) {
 
       <div className="divider" />
 
-      {/* --- Latency / Jitter / Loss --- */}
       <div className="network-stats">
         <div className="stats-col">
           <div className="stats-label">Latency</div>
@@ -48,7 +44,6 @@ export default function NetworkStatus({ network }) {
 
       <div className="divider" />
 
-      {/* --- Link Type --- */}
       <div className="network-footer">
         <div className="footer-label">Simulated Link:</div>
         <div className="footer-value">

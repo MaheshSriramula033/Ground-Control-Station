@@ -4,13 +4,17 @@ const SIGNAL_PATH = "/signal";
 
 function buildSignalUrl() {
   const env = import.meta.env.VITE_BACKEND_WS || "";
+
   if (env) {
     if (env.startsWith("ws://") || env.startsWith("wss://")) {
-      return env.endsWith(SIGNAL_PATH) ? env : env.replace(/\/+$/, "") + SIGNAL_PATH;
+      return env.endsWith(SIGNAL_PATH)
+        ? env
+        : env.replace(/\/+$/, "") + SIGNAL_PATH;
     }
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     return `${proto}://${env}${SIGNAL_PATH}`;
   }
+
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   return `${proto}://${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}${SIGNAL_PATH}`;
 }
@@ -23,7 +27,8 @@ export default function VideoViewer() {
 
   useEffect(() => {
     const url = buildSignalUrl();
-    console.log("Viewer connecting to signaling at", url);
+    console.log("Viewer connecting to signaling:", url);
+
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -35,23 +40,20 @@ export default function VideoViewer() {
     ws.onmessage = async (ev) => {
       const msg = JSON.parse(ev.data);
 
-      // Viewer receives an offer from streamer
       if (msg.type === "offer") {
         try {
           const pc = new RTCPeerConnection({
-            iceServers: [
-              { urls: "stun:stun.l.google.com:19302" },
-              // add TURN servers if you have them
-            ],
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
           });
+
           pcRef.current = pc;
 
           pc.ontrack = (ev2) => {
-            if (remoteVideoRef.current) remoteVideoRef.current.srcObject = ev2.streams[0];
+            remoteVideoRef.current.srcObject = ev2.streams[0];
           };
 
           pc.onicecandidate = (ev3) => {
-            if (ev3.candidate && ws && ws.readyState === 1) {
+            if (ev3.candidate) {
               ws.send(
                 JSON.stringify({
                   type: "candidate",
@@ -75,34 +77,28 @@ export default function VideoViewer() {
             })
           );
 
-          setStatus("Answer sent. Waiting for stream…");
+          setStatus("Answer sent. Waiting for stream...");
         } catch (err) {
-          console.error("Viewer offer handling error:", err);
+          console.error("Viewer offer error:", err);
           setStatus("Offer error");
         }
       }
 
-      if (msg.type === "candidate") {
+      if (msg.type === "candidate" && pcRef.current) {
         try {
-          if (pcRef.current && msg.candidate) {
-            await pcRef.current.addIceCandidate(msg.candidate);
-          }
-        } catch (e) {
-          console.warn("Error adding remote candidate (viewer):", e);
-        }
+          await pcRef.current.addIceCandidate(msg.candidate);
+        } catch {}
       }
     };
 
+    ws.onerror = () => setStatus("Signaling error");
     ws.onclose = () => setStatus("Signaling closed");
-    ws.onerror = (e) => {
-      console.error("Viewer WS error:", e);
-      setStatus("Signaling error");
-    };
 
     return () => {
       try {
         ws.close();
       } catch {}
+
       if (pcRef.current) pcRef.current.close();
     };
   }, []);
@@ -112,9 +108,12 @@ export default function VideoViewer() {
       <h3 className="video-title">📡 Video Viewer (GCS Side)</h3>
 
       <div className="btn-row">
-        <button className="btn-stop" onClick={() => {
-          if (pcRef.current) pcRef.current.getReceivers().forEach(r => r.track?.stop());
-        }}>
+        <button
+          className="btn-stop"
+          onClick={() => {
+            pcRef.current?.getReceivers().forEach((r) => r.track?.stop());
+          }}
+        >
           Stop Viewing
         </button>
       </div>

@@ -1,7 +1,8 @@
 {
   "name": "gcs-backend",
   "version": "1.0.0",
-  "description": "Cloud GCS backend - Express + WebSocket + UDP telemetry receiver (Node.js)",
+  "description": "Cloud GCS backend - Express + WebSocket + HTTP telemetry (Node.js)",
+  "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

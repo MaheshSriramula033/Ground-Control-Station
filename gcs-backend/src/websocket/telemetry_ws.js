@@ -1,4 +1,3 @@
-// backend/src/websocket/telemetry_ws.js
 import { WebSocketServer } from "ws";
 
 let wss = null;
@@ -7,6 +6,7 @@ let lastTelemetry = null;
 export default function createWebsocket(server) {
   wss = new WebSocketServer({ noServer: true });
 
+  // Allowed WebSocket paths
   const allowedPaths = ["/", "/telemetry", "/ws", "/dashboard"];
 
   server.on("upgrade", (req, socket, head) => {
@@ -22,7 +22,9 @@ export default function createWebsocket(server) {
   });
 }
 
-// ---- TELEMETRY WS BROADCAST ----
+/* -------------------------------
+   BROADCAST TELEMETRY
+--------------------------------*/
 export function publishTelemetry(data) {
   lastTelemetry = data;
 
@@ -35,7 +37,9 @@ export function publishTelemetry(data) {
   });
 }
 
-// ---- NETWORK WS BROADCAST ----
+/* -------------------------------
+   BROADCAST NETWORK STATUS
+--------------------------------*/
 export function publishNetworkStatus(status) {
   if (!wss) return;
 
@@ -46,7 +50,9 @@ export function publishNetworkStatus(status) {
   });
 }
 
-// ---- HTTP ENDPOINT FOR LATEST TELEMETRY ----
+/* -------------------------------
+   HTTP ENDPOINT: /latest
+--------------------------------*/
 export function attachHttp(app) {
   app.get("/latest", (req, res) => {
     res.json(lastTelemetry ?? {});

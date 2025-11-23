@@ -15,13 +15,13 @@ export default function useTelemetry() {
 
     const httpUrl = `${backendUrl}/latest`;
 
-    // Detect Render or Vercel → ALWAYS use HTTP polling
+    // Cloud mode → HTTP polling only
     const isCloud =
       backendHost.includes("onrender.com") ||
       window.location.hostname.includes("vercel.app");
 
     if (isCloud) {
-      console.log("🌍 CLOUD MODE: HTTP polling:", httpUrl);
+      console.log("🌍 CLOUD MODE: Polling", httpUrl);
       setConnectionStatus("Connected");
 
       const interval = setInterval(async () => {
@@ -55,9 +55,7 @@ export default function useTelemetry() {
       return () => clearInterval(interval);
     }
 
-    // -------------------------------------------------
-    // LOCAL MODE → WEBSOCKET
-    // -------------------------------------------------
+    // Local mode → enable WebSocket
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = backendHost.startsWith("ws")
       ? backendHost
@@ -105,6 +103,7 @@ export default function useTelemetry() {
 
     ws.onerror = () => setConnectionStatus("Error");
     ws.onclose = () => setConnectionStatus("Disconnected");
+
     return () => ws.close();
   }, []);
 

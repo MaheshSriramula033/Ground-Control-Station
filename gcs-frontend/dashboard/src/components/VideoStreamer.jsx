@@ -2,23 +2,21 @@ import React, { useRef, useState } from "react";
 
 const SIGNAL_PATH = "/signal";
 
-// Helper: build WS URL from env or current host
 function buildSignalUrl() {
   const env = import.meta.env.VITE_BACKEND_WS || "";
+
   if (env) {
-    // If env already includes ws:// or wss://, use it directly. If it has a path, keep it.
     if (env.startsWith("ws://") || env.startsWith("wss://")) {
-      // ensure trailing /signal if missing
-      return env.endsWith(SIGNAL_PATH) ? env : env.replace(/\/+$/, "") + SIGNAL_PATH;
+      return env.endsWith(SIGNAL_PATH)
+        ? env
+        : env.replace(/\/+$/, "") + SIGNAL_PATH;
     }
-    // env might be host only (example: backend.example.com)
+
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
     return `${proto}://${env}${SIGNAL_PATH}`;
   }
 
-  // fallback to same host as frontend (works both local and cloud if backend reachable on same host)
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
-  // if backend uses different port locally, set VITE_BACKEND_WS in .env (preferred)
   return `${proto}://${window.location.hostname}${window.location.port ? ":" + window.location.port : ""}${SIGNAL_PATH}`;
 }
 
@@ -42,133 +40,100 @@ export default function VideoStreamer() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("Streamer WS open");
         ws.send(JSON.stringify({ type: "join", room: "demo", role: "streamer" }));
       };
 
       ws.onmessage = async (ev) => {
         const msg = JSON.parse(ev.data);
-        console.log("Streamer received signaling:", msg);
 
-        // When joined by signaling server -> start camera and create offer
         if (msg.type === "joined") {
-          setStatus("Joined signaling, preparing camera...");
+          setStatus("Preparing camera...");
           try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: true,
+            });
+
             localStreamRef.current = stream;
             if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-            // Create peer connection with ICE servers
             const pc = new RTCPeerConnection({
-              iceServers: [
-                { urls: "stun:stun.l.google.com:19302" },
-                // add TURN servers here when available for production
-              ],
+              iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
             });
+
             pcRef.current = pc;
 
-            // Add local tracks
-            stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+            stream.getTracks().forEach((track) =>
+              pc.addTrack(track, stream)
+            );
 
-            // When local ICE candidate found, send to signaling
             pc.onicecandidate = (iceEv) => {
-              if (iceEv.candidate && ws && ws.readyState === 1) {
-                console.log("Streamer sending candidate", iceEv.candidate);
-                ws.send(JSON.stringify({ type: "candidate", room: "demo", candidate: iceEv.candidate }));
+              if (iceEv.candidate && ws.readyState === 1) {
+                ws.send(
+                  JSON.stringify({
+                    type: "candidate",
+                    room: "demo",
+                    candidate: iceEv.candidate,
+                  })
+                );
               }
             };
 
-            pc.onconnectionstatechange = () => {
-              console.log("PC state:", pc.connectionState);
-              if (pc.connectionState === "connected") setStatus("Connected (streaming)");
-            };
-
-            // create offer -> setLocalDescription -> send full SDP
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({ type: "offer", room: "demo", sdp: offer.sdp, sdpType: offer.type }));
-            setStatus("Offer sent, waiting for answer...");
+
+            ws.send(
+              JSON.stringify({
+                type: "offer",
+                room: "demo",
+                sdp: offer.sdp,
+              })
+            );
+
+            setStatus("Offer sent");
           } catch (err) {
-            console.error("getUserMedia or offer error:", err);
+            console.error(err);
             setStatus("Camera/Offer error");
           }
-          return;
         }
 
-        // Handle an answer from viewer
         if (msg.type === "answer") {
-          const pc = pcRef.current;
-          if (!pc) {
-            console.warn("Received answer but pcRef is null");
-            return;
-          }
           try {
-            console.log("Streamer setting remote description (answer)...");
-            await pc.setRemoteDescription({ type: "answer", sdp: msg.sdp });
-            setStatus("Connected (streaming)");
-          } catch (e) {
-            console.error("Error applying remote answer:", e);
+            await pcRef.current.setRemoteDescription({
+              type: "answer",
+              sdp: msg.sdp,
+            });
+            setStatus("Streaming");
+          } catch (err) {
+            console.error("Remote answer error", err);
             setStatus("Remote answer error");
           }
-          return;
         }
 
-        // Handle ICE candidate coming from viewer
-        if (msg.type === "candidate") {
-          const pc = pcRef.current;
-          if (pc && msg.candidate) {
-            try {
-              console.log("Streamer adding remote candidate", msg.candidate);
-              await pc.addIceCandidate(msg.candidate);
-            } catch (e) {
-              console.warn("Error adding remote candidate:", e);
-            }
+        if (msg.type === "candidate" && msg.candidate) {
+          try {
+            await pcRef.current?.addIceCandidate(msg.candidate);
+          } catch (e) {
+            console.warn("Candidate add error", e);
           }
-          return;
-        }
-
-        if (msg.type === "error") {
-          console.warn("Signaling error:", msg.message);
         }
       };
-
-      ws.onclose = () => {
-        console.log("Streamer signaling closed");
-        setStatus("Signaling closed");
-      };
-
-      ws.onerror = (err) => {
-        console.error("Streamer WS error", err);
-        setStatus("Signaling error");
-      };
-    } catch (e) {
-      console.error("Start streaming error:", e);
-      setStatus("Failed to start");
+    } catch (err) {
+      console.error("Streamer start error:", err);
+      setStatus("Failed");
     }
   };
 
   const stop = () => {
-    setStatus("Stopping...");
-    // Close PeerConnection
-    if (pcRef.current) {
-      try {
-        pcRef.current.getSenders().forEach((s) => s.track?.stop && s.track.stop());
-      } catch (e) {} // ignore
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    // Stop local stream
+    if (pcRef.current) pcRef.current.close();
+    if (wsRef.current) wsRef.current.close();
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
     }
-    // Clear video element
+
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
-    // Close signaling socket
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+
     setStatus("Stopped");
   };
 
@@ -184,7 +149,13 @@ export default function VideoStreamer() {
       <div className="status-text">{status}</div>
 
       <div className="video-box">
-        <video ref={localVideoRef} autoPlay muted playsInline className="video-element" />
+        <video
+          ref={localVideoRef}
+          autoPlay
+          muted
+          playsInline
+          className="video-element"
+        />
       </div>
     </div>
   );

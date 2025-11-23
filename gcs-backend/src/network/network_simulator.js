@@ -1,14 +1,4 @@
-// backend/src/network/network_simulator.js
 import { publishNetworkStatus } from "../websocket/telemetry_ws.js";
-
-/**
- * Simulated network layer to emulate:
- * - VPN connect/disconnect
- * - network type (WiFi / LTE / 4G)
- * - latency, jitter, packet loss (randomized)
- *
- * Call startNetworkSimulator() from server.js
- */
 
 const NETWORK_TYPES = ["WiFi", "LTE", "4G"];
 let intervalRef = null;
@@ -22,38 +12,39 @@ function randomChoice(arr) {
 }
 
 export function startNetworkSimulator() {
-  if (intervalRef) return; // already running
+  if (intervalRef) return;
 
-  // initial state
   let vpnConnected = true;
   let currentNetwork = randomChoice(NETWORK_TYPES);
 
   intervalRef = setInterval(() => {
-    // occasionally toggle VPN (rare)
     if (Math.random() < 0.05) vpnConnected = !vpnConnected;
-
-    // occasionally change network type (e.g., handover between WiFi and LTE)
     if (Math.random() < 0.15) currentNetwork = randomChoice(NETWORK_TYPES);
 
-    // simulated metrics depend on network type
-    let baseLatency = currentNetwork === "WiFi" ? 20 : currentNetwork === "LTE" ? 70 : 90;
-    let latency = Math.max(5, randomFloat(baseLatency - 10, baseLatency + 30, 0));
-    let jitter = Math.max(0.5, randomFloat(1, 10, 1));
-    let loss = Number(randomFloat(0, 1.5, 2)); // percent
+    let baseLatency =
+      currentNetwork === "WiFi"
+        ? 20
+        : currentNetwork === "LTE"
+        ? 70
+        : 90;
+
+    const latency = Math.max(5, randomFloat(baseLatency - 10, baseLatency + 30));
+    const jitter = randomFloat(1, 10);
+    const loss = randomFloat(0, 1.5, 2);
 
     const payload = {
       vpn: vpnConnected ? "connected" : "disconnected",
       network: currentNetwork,
-      latency, // ms
-      jitter,  // ms
-      loss,    // %
-      ts: Date.now()
+      latency,
+      jitter,
+      loss,
+      ts: Date.now(),
     };
 
     publishNetworkStatus(payload);
   }, 2000);
 
-  console.log("Network simulator started (simulating VPN/4G/WiFi)");
+  console.log("🌐 Network simulator started");
 }
 
 export function stopNetworkSimulator() {
