@@ -9,68 +9,21 @@ export default function useTelemetry() {
   const bufferRef = useRef([]);
 
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const backendHost = import.meta.env.VITE_BACKEND_URL; // must be set
-    const wsUrl = `${protocol}://${backendHost}`;
-    const httpUrl = `https://${backendHost}/latest`;
+    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    // Use the backend hostname with port 3000 for local dev
+    const url = `${wsProtocol}://${window.location.hostname}:3000`;
 
-    const isRender =
-      backendHost.includes("onrender.com") ||
-      window.location.hostname.includes("onrender.com");
+    console.log("📡 Connecting to:", url);
 
-    // -----------------------------
-    // 🔵 RENDER MODE → HTTP Polling
-    // -----------------------------
-    if (isRender) {
-      console.log("🌍 Running in Render mode: using HTTP polling");
+    const ws = new WebSocket(url);
 
-      setInterval(async () => {
-        try {
-          const res = await fetch(httpUrl);
-          const t = await res.json();
-          if (!t || !t.ts) return;
-
-          const unified = {
-            lat: t.lat,
-            lon: t.lon,
-            flightMode: t.flight_mode,
-            armStatus: t.arm_status,
-            gpsStatus: t.gps_status,
-            satellites: t.satellites,
-            altitude: t.alt_m ?? 0,
-            speed: t.groundspeed_m_s ?? 0,
-            heading: t.heading_deg ?? 0,
-            batteryPct: Math.round(t.battery_pct ?? 0),
-            voltage: t.voltage ?? 11.1,
-            time: new Date(t.ts).toLocaleTimeString(),
-          };
-
-          setTelemetry(unified);
-          bufferRef.current = [...bufferRef.current, unified].slice(-50);
-        } catch {}
-      }, 1000);
-
-      return;
-    }
-
-    // -----------------------------
-    // LOCAL MODE → WebSocket
-    // -----------------------------
-    console.log("📡 Connecting WS:", wsUrl);
-
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => setConnectionStatus("Connected");
-
+    ws.onopen = () => {
+      setConnectionStatus("Connected");
+      console.log("WS connected to", url);
+    };
     ws.onmessage = (ev) => {
       try {
         const obj = JSON.parse(ev.data);
-
-        if (obj.type === "network") {
-          setNetwork(obj.data);
-          return;
-        }
-
         if (obj.type === "telemetry") {
           const t = obj.data;
 
@@ -90,21 +43,31 @@ export default function useTelemetry() {
           };
 
           setTelemetry(unified);
-          bufferRef.current = [...bufferRef.current, unified].slice(-50);
+          bufferRef.current.push(unified);
+          if (bufferRef.current.length > 120) bufferRef.current.shift();
+        } else if (obj.type === "network") {
+          setNetwork(obj.data);
         }
-      } catch {}
+      } catch (e) {
+        // ignore parsing errors
+        console.warn("Telemetry parse error", e);
+      }
+    };
+    ws.onclose = () => {
+      setConnectionStatus("Disconnected");
+      console.log("WS closed");
+    };
+    ws.onerror = (err) => {
+      setConnectionStatus("Error");
+      console.error("WS error", err);
     };
 
-    ws.onerror = () => setConnectionStatus("Error");
-    ws.onclose = () => setConnectionStatus("Disconnected");
-
-    return () => ws.close();
+    return () => {
+      try {
+        ws.close();
+      } catch {}
+    };
   }, []);
 
-  return {
-    telemetry,
-    network,
-    recent: bufferRef.current,
-    connectionStatus,
-  };
+  return { telemetry, recent: bufferRef.current, connectionStatus, network };
 }
