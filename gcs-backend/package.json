@@ -1,0 +1,21 @@
+{
+  "name": "gcs-backend",
+  "version": "1.0.0",
+  "description": "Cloud GCS backend - Express + WebSocket + UDP telemetry receiver (Node.js)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.13.0",
+    "dotenv": "^16.0.3",
+    "ioredis": "^5.3.2",
+    "morgan": "^1.10.0",
+    "pino": "^8.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

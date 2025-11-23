@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./gcs-backend
+    container_name: gcs-backend
+    ports:
+      - "3000:3000"
+      - "14550:14550/udp"
+    env_file:
+      - ./gcs-backend/.env
+    restart: always
+
+  frontend:
+    build: ./gcs-frontend/dashboard
+    container_name: gcs-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
