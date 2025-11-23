@@ -11,7 +11,7 @@ export default function useTelemetry() {
   useEffect(() => {
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
     // Use the backend hostname with port 3000 for local dev
-    const url = `${wsProtocol}://${window.location.hostname}:3000`;
+    const url =import.meta.env.VITE_BACKEND_HTTP;
 
     console.log("📡 Connecting to:", url);
 
