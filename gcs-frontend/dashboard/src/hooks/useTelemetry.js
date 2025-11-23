@@ -1,3 +1,4 @@
+// frontend/src/hooks/useTelemetry.js
 import { useEffect, useRef, useState } from "react";
 
 export default function useTelemetry() {
@@ -15,16 +16,19 @@ export default function useTelemetry() {
 
     const httpUrl = `${backendUrl}/latest`;
 
-    // Cloud mode → HTTP polling only
+    // -----------------------------
+    // CLOUD MODE → HTTP polling + WS (NETWORK ONLY)
+    // -----------------------------
     const isCloud =
       backendHost.includes("onrender.com") ||
       window.location.hostname.includes("vercel.app");
 
     if (isCloud) {
-      console.log("🌍 CLOUD MODE: Polling", httpUrl);
+      console.log("🌍 CLOUD MODE ENABLED");
       setConnectionStatus("Connected");
 
-      const interval = setInterval(async () => {
+      // ---- TELEMETRY via HTTP polling ----
+      const poll = setInterval(async () => {
         try {
           const res = await fetch(httpUrl);
           const t = await res.json();
@@ -52,16 +56,38 @@ export default function useTelemetry() {
         }
       }, 1000);
 
-      return () => clearInterval(interval);
+      // ---- NETWORK UPDATES via WebSocket ----
+      const wsProtocol = "wss";
+      const wsUrl = `${wsProtocol}://${backendHost}`;
+
+      console.log("🌐 Network WS connecting:", wsUrl);
+
+      const networkWs = new WebSocket(wsUrl);
+
+      networkWs.onmessage = (ev) => {
+        try {
+          const obj = JSON.parse(ev.data);
+          if (obj.type === "network") {
+            setNetwork(obj.data);
+          }
+        } catch {}
+      };
+
+      networkWs.onerror = (e) => console.warn("Network WS error", e);
+
+      return () => {
+        clearInterval(poll);
+        try { networkWs.close(); } catch {}
+      };
     }
 
-    // Local mode → enable WebSocket
+    // -----------------------------
+    // LOCAL MODE → Full WebSocket
+    // -----------------------------
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = backendHost.startsWith("ws")
-      ? backendHost
-      : `${wsProtocol}://${backendHost}`;
+    const wsUrl = `${wsProtocol}://${backendHost}`;
 
-    console.log("📡 LOCAL WS MODE:", wsUrl);
+    console.log("📡 LOCAL FULL WS MODE:", wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => setConnectionStatus("Connected");
@@ -96,9 +122,7 @@ export default function useTelemetry() {
           setTelemetry(unified);
           bufferRef.current = [...bufferRef.current, unified].slice(-120);
         }
-      } catch (e) {
-        console.warn("Telemetry parse error", e);
-      }
+      } catch {}
     };
 
     ws.onerror = () => setConnectionStatus("Error");
@@ -107,5 +131,5 @@ export default function useTelemetry() {
     return () => ws.close();
   }, []);
 
-  return { telemetry, recent: bufferRef.current, connectionStatus, network };
+  return { telemetry, network, recent: bufferRef.current, connectionStatus };
 }
