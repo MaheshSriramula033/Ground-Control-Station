@@ -5,11 +5,6 @@ import { normalizeTelemetry } from "./message_normalizer.js";
 import { publishTelemetry } from "../websocket/telemetry_ws.js";
 
 export function startUdpReceiver() {
-  if (process.env.RENDER === "true") {
-    console.log("Skipping UDP receiver (Render free tier)");
-    return;
-  }
-
   const socket = dgram.createSocket("udp4");
 
   socket.on("message", (msg) => {

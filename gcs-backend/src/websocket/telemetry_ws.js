@@ -32,7 +32,6 @@ export function publishTelemetry(data) {
   if (!wss) return;
 
   const payload = JSON.stringify({ type: "telemetry", data });
-
   wss.clients.forEach((client) => {
     if (client.readyState === 1) client.send(payload);
   });
@@ -42,13 +41,12 @@ export function publishNetworkStatus(status) {
   if (!wss) return;
 
   const payload = JSON.stringify({ type: "network", data: status });
-
   wss.clients.forEach((client) => {
     if (client.readyState === 1) client.send(payload);
   });
 }
 
-// -------- HTTP READER for Render frontend --------
+// Simple HTTP endpoint attachment so frontends (or anyone) can GET latest telemetry
 export function attachHttp(app) {
   app.get("/latest", (req, res) => {
     res.json(lastTelemetry ?? {});
