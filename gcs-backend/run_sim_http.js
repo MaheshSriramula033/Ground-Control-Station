@@ -11,7 +11,7 @@
  * This file is safe to run locally, or in Render worker. It does not require UDP.
  */
 
-const TARGET_URL = process.env.BACKEND_URL || "http://localhost:3000";
+const TARGET_URL = "https://ground-control-station.onrender.com";
 const INTERVAL = parseInt(process.env.INTERVAL_MS || "1000", 10);
 
 let lat = 17.384508;
