@@ -11,8 +11,14 @@ import { startSignaling } from "./signaling/webrtc_signaling.js";
 import { startNetworkSimulator } from "./network/network_simulator.js";
 
 import morgan from "morgan";
-
+import cors from "cors";
 const app = express();
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,POST,OPTIONS",
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
