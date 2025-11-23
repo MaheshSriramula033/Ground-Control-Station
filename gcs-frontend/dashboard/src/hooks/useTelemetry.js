@@ -1,4 +1,3 @@
-// frontend/src/hooks/useTelemetry.js
 import { useEffect, useRef, useState } from "react";
 
 export default function useTelemetry() {
@@ -9,25 +8,29 @@ export default function useTelemetry() {
   const bufferRef = useRef([]);
 
   useEffect(() => {
-    const backendHost = import.meta.env.VITE_BACKEND_HTTP;
-    const backendUrl = backendHost.startsWith("http")
-      ? backendHost
-      : `https://${backendHost}`;
+    const backendHost = import.meta.env.VITE_BACKEND_HTTP; 
+    // FIX 1: remove accidental "https//"
+    const cleanHost = backendHost.replace("https//", "https://").replace("http//", "http://");
+
+    const backendUrl = cleanHost.startsWith("http")
+      ? cleanHost
+      : `https://${cleanHost}`;
 
     const httpUrl = `${backendUrl}/latest`;
 
-    // -----------------------------
-    // CLOUD MODE → HTTP polling + WS (NETWORK ONLY)
-    // -----------------------------
     const isCloud =
-      backendHost.includes("onrender.com") ||
+      cleanHost.includes("onrender.com") ||
       window.location.hostname.includes("vercel.app");
 
+    /* -------------------------------------------------------
+       CLOUD MODE → TELEMETRY via HTTP + NETWORK via WebSocket
+    -------------------------------------------------------- */
     if (isCloud) {
-      console.log("🌍 CLOUD MODE ENABLED");
+      console.log("🌍 CLOUD MODE → HTTP + WS");
+
       setConnectionStatus("Connected");
 
-      // ---- TELEMETRY via HTTP polling ----
+      // TELEMETRY POLLING
       const poll = setInterval(async () => {
         try {
           const res = await fetch(httpUrl);
@@ -56,11 +59,11 @@ export default function useTelemetry() {
         }
       }, 1000);
 
-      // ---- NETWORK UPDATES via WebSocket ----
-      const wsProtocol = "wss";
-      const wsUrl = `${wsProtocol}://${backendHost}`;
-
-      console.log("🌐 Network WS connecting:", wsUrl);
+      // ---------------------------- 
+      // FIX 2: Proper WebSocket URL
+      // ----------------------------
+      const wsUrl = `wss://${cleanHost}`;  // no double https
+      console.log("🔌 Network WS:", wsUrl);
 
       const networkWs = new WebSocket(wsUrl);
 
@@ -81,13 +84,13 @@ export default function useTelemetry() {
       };
     }
 
-    // -----------------------------
-    // LOCAL MODE → Full WebSocket
-    // -----------------------------
+    /* -------------------------------------------------------
+        LOCAL MODE → FULL WebSocket (Telemetry + Network)
+    -------------------------------------------------------- */
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${wsProtocol}://${backendHost}`;
+    const wsUrl = `${wsProtocol}://${cleanHost}`;
 
-    console.log("📡 LOCAL FULL WS MODE:", wsUrl);
+    console.log("📡 LOCAL WS:", wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => setConnectionStatus("Connected");
