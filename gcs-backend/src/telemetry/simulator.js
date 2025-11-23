@@ -13,13 +13,12 @@ function randomWalk() {
   lon += (Math.random() - 0.5) * 0.0003;
   alt += (Math.random() - 0.5) * 0.4;
 
-  // realistic battery drain
-  const drain = Math.random() * 1 + 0.5;     // 0.5–1.5% per sec
-  const noise = (Math.random() - 0.5) * 0.3; // small jitter
+  // ⭐ SLOW + REALISTIC battery drain ⭐
+  const drain = Math.random() * 0.15 + 0.05;  // 0.05% – 0.20% per second
+  const noise = (Math.random() - 0.5) * 0.05; // tiny jitter
 
   battery = Math.max(0, battery - drain + noise);
 }
-
 
 function generateTelemetry() {
   return {
